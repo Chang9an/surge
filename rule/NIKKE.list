@@ -1,0 +1,30 @@
+# NIKKE 分流
+DOMAIN-SUFFIX, ios-us-crashsight.iegcom.com
+DOMAIN-SUFFIX, aws-na-dr.intlgame.com
+DOMAIN-SUFFIX, ocloud.nikke-kr.com
+DOMAIN-SUFFIX, jp-lobby.nikke-kr.com
+DOMAIN-SUFFIX, nikke-en.com
+
+
+DOMAIN-SUFFIX, global-lobby.nikke-kr.com
+DOMAIN-SUFFIX, cloud.nikke-kr.com
+DOMAIN-SUFFIX, sg-vas.intlgame.com
+DOMAIN-SUFFIX, aws-na-dr.intlgame.com
+DOMAIN-SUFFIX, data-aws-na.intlgame.com
+
+DOMAIN-SUFFIX, pc.crashsight-us.iegcom.com
+IP-CIDR, 43.152.114.31/32
+
+DOMAIN-SUFFIX, nikke-kr.com
+DOMAIN-SUFFIX, intlgame.com
+DOMAIN-SUFFIX, iegcom.com
+
+#ACE
+DOMAIN-SUFFIX, anticheatexpert.com
+DOMAIN-SUFFIX, down.anticheatexpert.com
+
+#PC NA
+DOMAIN-SUFFIX, catalog.gamepass.com 
+DOMAIN-SUFFIX, na1.centauriglobal.com 
+DOMAIN-SUFFIX, gamepass.com 
+DOMAIN-SUFFIX, centauriglobal.com 
