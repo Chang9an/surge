@@ -152,10 +152,10 @@ if (url.includes("/v1/note/imagefeed") || url.includes("/v2/note/feed")) {
           url: item.video_info_v2.media.stream.h265[0].master_url
         };
         newDatas.push(myData);
+        // 打印数据
+        console.log("Data stored in newDatas:", newDatas);
       }
     }
-    // 打印数据
-    console.log("Data stored in newDatas:", newDatas);
     // 写入持久化存储
     if (isQuanX) {
       $prefs.setValueForKey(JSON.stringify(newDatas), "redBookVideoFeed");
@@ -217,9 +217,9 @@ if (obj?.data?.note_id !== "" && obj?.data?.download_url !== "") {
       if (item.id === obj.data.note_id) {
         // 更新对象中的download_url为匹配项的URL
         obj.data.download_url = item.url;
+        console.log("Updated download URL:", obj.data.download_url);
       }
     }
-    console.log("Updated download URL:", obj.data.download_url);
   }
 }
 } else if (url.includes("/v10/search/notes")) {
