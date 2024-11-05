@@ -1,7 +1,7 @@
 /*
 引用地址 https://raw.githubusercontent.com/RuCu6/Loon/main/Scripts/xiaohongshu.js
 */
-// 2024-11-05 03:00
+// 2024-11-05 13:10
 
 const url = $request.url;
 const isQuanX = typeof $task !== "undefined";
@@ -10,48 +10,47 @@ let obj = JSON.parse($response.body);
 
 if (url.includes("/v1/note/imagefeed") || url.includes("/v2/note/feed")) {
   // 信息流 图片
-  if (obj?.data?.length > 0) {
-    let data0 = obj.data[0];
-    if (data0?.note_list?.length > 0) {
-      for (let item of data0.note_list) {
-        if (item?.media_save_config) {
-          // 水印开关
-          item.media_save_config.disable_save = false;
-          item.media_save_config.disable_watermark = true;
-          item.media_save_config.disable_weibo_cover = true;
+  let newDatas = [];
+  if (obj?.data?.[0]?.note_list?.length > 0) {
+    for (let item of obj.data[0].note_list) {
+      if (item?.media_save_config) {
+        // 水印开关
+        item.media_save_config.disable_save = false;
+        item.media_save_config.disable_watermark = true;
+        item.media_save_config.disable_weibo_cover = true;
+      }
+      if (item?.share_info?.function_entries?.length > 0) {
+        // 下载限制
+        const additem = { type: "video_download" };
+        let func = item.share_info.function_entries[0];
+        if (func?.type !== "video_download") {
+          // 向数组开头添加对象
+          item.share_info.function_entries.unshift(additem);
         }
-        if (item?.share_info?.function_entries?.length > 0) {
-          // 下载限制
-          const additem = { type: "video_download" };
-          let func = item.share_info.function_entries[0];
-          if (func?.type !== "video_download") {
-            // 向数组开头添加对象
-            item.share_info.function_entries.unshift(additem);
+      }
+      if (item?.images_list?.length > 0) {
+        for (let i of item.images_list) {
+          if (i.hasOwnProperty("live_photo_file_id") && i.hasOwnProperty("live_photo")) {
+            if (
+              i?.live_photo_file_id !== "" &&
+              i?.live_photo?.media?.video_id !== "" &&
+              i?.live_photo?.media?.stream?.h265?.[0]?.master_url !== ""
+            ) {
+              let myData = {
+                file_id: i.live_photo_file_id,
+                video_id: i.live_photo.media.video_id,
+                url: i.live_photo.media.stream.h265[0].master_url
+              };
+              newDatas.push(myData);
+            }
+            // 写入持久化存储
+            if (isQuanX) {
+              $prefs.setValueForKey(JSON.stringify(newDatas), "redBookLivePhoto");
+            } else {
+              $persistentStore.write(JSON.stringify(newDatas), "redBookLivePhoto");
+            }
           }
         }
-      }
-    }
-    let newDatas = [];
-    if (obj?.data?.[0]?.note_list?.[0]?.images_list?.length > 0) {
-      for (let item of obj.data[0].note_list[0].images_list) {
-        if (
-          item?.live_photo_file_id !== "" &&
-          item?.live_photo?.media?.video_id !== "" &&
-          item?.live_photo?.media?.stream?.h265?.[0]?.master_url !== ""
-        ) {
-          let myData = {
-            file_id: item.live_photo_file_id,
-            video_id: item.live_photo.media.video_id,
-            url: item.live_photo.media.stream.h265[0].master_url
-          };
-          newDatas.push(myData);
-        }
-      }
-      // 写入持久化存储
-      if (isQuanX) {
-        $prefs.setValueForKey(JSON.stringify(newDatas), "redBookLivePhoto");
-      } else {
-        $persistentStore.write(JSON.stringify(newDatas), "redBookLivePhoto");
       }
     }
   }
@@ -155,6 +154,8 @@ if (url.includes("/v1/note/imagefeed") || url.includes("/v2/note/feed")) {
         newDatas.push(myData);
       }
     }
+    // 打印数据
+    console.log("Data stored in newDatas:", newDatas);
     // 写入持久化存储
     if (isQuanX) {
       $prefs.setValueForKey(JSON.stringify(newDatas), "redBookVideoFeed");
@@ -197,20 +198,30 @@ if (url.includes("/v1/note/imagefeed") || url.includes("/v2/note/feed")) {
   // 视频保存请求
   let videoFeed;
   // 读取持久化存储
-  if (isQuanX) {
-    videoFeed = JSON.parse($prefs.valueForKey("redBookVideoFeed"));
-  } else {
-    videoFeed = JSON.parse($persistentStore.read("redBookVideoFeed"));
-  }
-  if (obj?.data?.note_id !== "" && obj?.data?.download_url !== "") {
-    if (videoFeed?.length > 0) {
-      for (let item of videoFeed) {
-        if (item.id === obj.data.note_id) {
-          obj.data.download_url = item.url;
-        }
+// 根据不同的条件选择合适的方式来获取视频源
+if (isQuanX) {
+  // 如果是QuanX环境，从偏好设置中获取视频源
+  videoFeed = JSON.parse($prefs.valueForKey("redBookVideoFeed"));
+} else {
+  // 否则，从持久化存储中读取视频源
+  videoFeed = JSON.parse($persistentStore.read("redBookVideoFeed"));
+}
+// 打印从存储中获取的数据
+console.log("Data retrieved from storage:", videoFeed);
+// 检查对象中的数据是否存在note_id和download_url，且不为空
+if (obj?.data?.note_id !== "" && obj?.data?.download_url !== "") {
+  // 如果视频源存在且不为空
+  if (videoFeed?.length > 0) {
+    // 遍历视频源中的每个项目
+    for (let item of videoFeed) {
+      // 如果当前项目的ID与对象中的note_id匹配
+      if (item.id === obj.data.note_id) {
+        // 更新对象中的download_url为匹配项的URL
+        obj.data.download_url = item.url;
       }
     }
   }
+}
 } else if (url.includes("/v10/search/notes")) {
   // 搜索结果
   if (obj?.data?.items?.length > 0) {
