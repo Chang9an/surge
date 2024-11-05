@@ -220,6 +220,7 @@ if (obj?.data?.note_id !== "" && obj?.data?.download_url !== "") {
         obj.data.download_url = item.url;
       }
     }
+    console.log("Updated download URL:", obj.data.download_url)
   }
 }
 } else if (url.includes("/v10/search/notes")) {
