@@ -161,8 +161,6 @@ if (url.includes("/v1/note/imagefeed") || url.includes("/v2/note/feed")) {
       $prefs.setValueForKey(JSON.stringify(newDatas), "redBookVideoFeed");
     } else {
       $persistentStore.write(JSON.stringify(newDatas), "redBookVideoFeed");
-    } else {
-    videoFeed = JSON.parse($persistentStore.read("redBookVideoFeed"));
     }
   }
 } else if (url.includes("/v5/recommend/user/follow_recommend")) {
@@ -207,9 +205,8 @@ if (isQuanX) {
 } else {
   // 否则，从持久化存储中读取视频源
   videoFeed = JSON.parse($persistentStore.read("redBookVideoFeed"));
-}
-// 打印从存储中获取的数据
-console.log("Data retrieved from storage:", videoFeed);
+  console.log("Data retrieved from storage:", videoFeed);
+} 
 // 检查对象中的数据是否存在note_id和download_url，且不为空
 if (obj?.data?.note_id !== "" && obj?.data?.download_url !== "") {
   // 如果视频源存在且不为空
@@ -222,7 +219,7 @@ if (obj?.data?.note_id !== "" && obj?.data?.download_url !== "") {
         obj.data.download_url = item.url;
       }
     }
-    console.log("Updated download URL:", obj.data.download_url)
+    console.log("Updated download URL:", obj.data.download_url);
   }
 }
 } else if (url.includes("/v10/search/notes")) {
