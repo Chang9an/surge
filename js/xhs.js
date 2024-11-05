@@ -161,6 +161,8 @@ if (url.includes("/v1/note/imagefeed") || url.includes("/v2/note/feed")) {
       $prefs.setValueForKey(JSON.stringify(newDatas), "redBookVideoFeed");
     } else {
       $persistentStore.write(JSON.stringify(newDatas), "redBookVideoFeed");
+    } else {
+    videoFeed = JSON.parse($persistentStore.read("redBookVideoFeed"));
     }
   }
 } else if (url.includes("/v5/recommend/user/follow_recommend")) {
