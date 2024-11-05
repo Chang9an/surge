@@ -1,7 +1,7 @@
 /*
 引用地址 https://raw.githubusercontent.com/RuCu6/Loon/main/Scripts/xiaohongshu.js
 */
-// 2024-11-05 23:10
+// 2024-11-05 13:10
 
 const url = $request.url;
 const isQuanX = typeof $task !== "undefined";
@@ -154,6 +154,8 @@ if (url.includes("/v1/note/imagefeed") || url.includes("/v2/note/feed")) {
         newDatas.push(myData);
       }
     }
+    // 打印数据
+    console.log("Data stored in newDatas:", newDatas);
     // 写入持久化存储
     if (isQuanX) {
       $prefs.setValueForKey(JSON.stringify(newDatas), "redBookVideoFeed");
@@ -203,7 +205,9 @@ if (isQuanX) {
 } else {
   // 否则，从持久化存储中读取视频源
   videoFeed = JSON.parse($persistentStore.read("redBookVideoFeed"));
-} 
+}
+// 打印从存储中获取的数据
+console.log("Data retrieved from storage:", videoFeed);
 // 检查对象中的数据是否存在note_id和download_url，且不为空
 if (obj?.data?.note_id !== "" && obj?.data?.download_url !== "") {
   // 如果视频源存在且不为空
