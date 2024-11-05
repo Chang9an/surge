@@ -1,7 +1,7 @@
 /*
 引用地址 https://raw.githubusercontent.com/RuCu6/Loon/main/Scripts/xiaohongshu.js
 */
-// 2024-11-05 13:10
+// 2024-11-05 23:10
 
 const url = $request.url;
 const isQuanX = typeof $task !== "undefined";
