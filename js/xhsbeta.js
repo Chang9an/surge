@@ -216,8 +216,9 @@ if (url.includes("/v1/note/imagefeed") || url.includes("/v2/note/feed")) {
             }
         }
         if (downloadUrl !== "") {
-            let attach = { openUrl: downloadUrl, clipboard: downloadUrl };
-            $notification.post("⚠️⚠️⚠️", "不支持保存, 请手动下载! ", downloadUrl, attach);
+            let externalUrl = "surge:///install-url?url=" + downloadUrl;
+            let attach = { openUrl: externalUrl, clipboard: downloadUrl };
+            $notification.post("⚠️⚠️⚠️", "不支持保存, 请手动下载! ", "点击打开下载链接", attach);
         }
     }
 }
