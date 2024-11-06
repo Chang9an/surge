@@ -218,8 +218,15 @@ if (obj?.data?.note_id !== "" && videoFeedUnlock?.length > 0) {
         let notificationTitle = "⚠️⚠️⚠️";
         let notificationSubtitle = "作者不让下载另辟蹊径吧";
         let notificationBody = "无水印下载链接在这里咯: " + obj.data.download_url;
-        let openUrl = obj.data.download_url; // 将下载链接设为通知点击后打开的 URL
-        $notification.post(notificationTitle, notificationSubtitle, notificationBody, { openUrl });
+        
+        // 添加复制到剪贴板的动作
+        let actionTitle = "复制链接";
+        let action = {
+            title: actionTitle,
+            url: "clipboard://" + obj.data.download_url
+        };
+        
+        $notification.post(notificationTitle, notificationSubtitle, notificationBody, action);
     }
 }
 
