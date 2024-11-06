@@ -1,7 +1,7 @@
 /*
 引用地址 https://raw.githubusercontent.com/RuCu6/Loon/main/Scripts/xiaohongshu.js
 */
-// 2024-11-06 23:30
+// 2024-11-07 04:30
 
 const url = $request.url;
 if (!$response.body) $done({});
@@ -215,23 +215,30 @@ if (obj?.data?.note_id !== "" && videoFeedUnlock?.length > 0) {
         }
 
         // 在通知中包含下载链接，并设置点击通知时打开的 URL
-        let notificationTitle = "😅";
+        let notificationTitle = "🦄RedBook";
         let notificationSubtitle = "作者不让下载 另辟蹊径吧";
         let notificationBody = "无水印下载链接在这里咯: " + obj.data.download_url;
+				let clipboardTitle = "🦄";
+        let clipboardSubtitle = "点击此条通知复制链接";
+				let clipboardBody = obj.data.download_url;
         
-        // 设置通知的 action 和 open-url 参数
-        let notificationAction = "open-url";
-        let notificationOpenUrl = obj.data.download_url;
-        console.log("notificationAction:", notificationAction);
-        console.log("notificationOpenUrl:", notificationOpenUrl);
+        let notificationOptions = {
+            action: "open-url",
+            url: obj.data.download_url,
+            "auto-dismiss" : 20
+            };
 
-        $notification.post(notificationTitle, notificationSubtitle, notificationBody, { action: notificationAction, "open-url": notificationOpenUrl });
+        let clipboardOptions = {
+            action: "clipboard",
+            text: obj.data.download_url,
+          	"auto-dismiss" : 20
+            };
+        $notification.post(notificationTitle, notificationSubtitle, notificationBody, notificationOptions);
     }
 }
 
 videoFeedUnlock = { notSave: true };
 $persistentStore.write(JSON.stringify(videoFeedUnlock), "redBookVideoFeedUnlock");
-
 } else if (url.includes("/v10/search/notes")) {
   // 搜索结果
   if (obj?.data?.items?.length > 0) {
