@@ -1,7 +1,7 @@
 /*
 引用地址 https://raw.githubusercontent.com/RuCu6/Loon/main/Scripts/xiaohongshu.js
 */
-// 2024-11-06 22:55
+// 2024-11-06 23:30
 
 const url = $request.url;
 if (!$response.body) $done({});
@@ -213,23 +213,18 @@ if (obj?.data?.note_id !== "" && videoFeedUnlock?.length > 0) {
                 obj.data.download_url = item.url;
             }
         }
+
+        // 在通知中包含下载链接，并设置点击通知时打开的 URL
+        let notificationTitle = "😅";
+        let notificationSubtitle = "作者不让下载 另辟蹊径吧";
+        let notificationBody = "无水印下载链接在这里咯: " + obj.data.download_url;
         
-        // 发送包含打开链接的通知
-        let notificationTitle = "⚠️⚠️⚠️";
-        let notificationSubtitle = "不支持保存，请手动下载!";
-        let notificationBody = "点击通知以打开下载链接";
-        let notificationAction = "open-url";
-        
-        $notification.post(notificationTitle, notificationSubtitle, notificationBody, {
-            "action": notificationAction,
-            "open-url": obj.data.download_url
-        });
+        $notification.post(notificationTitle, notificationSubtitle, notificationBody);
     }
 }
 
 videoFeedUnlock = { notSave: true };
 $persistentStore.write(JSON.stringify(videoFeedUnlock), "redBookVideoFeedUnlock");
-
 
 } else if (url.includes("/v10/search/notes")) {
   // 搜索结果
