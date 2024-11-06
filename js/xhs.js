@@ -203,7 +203,7 @@ if (url.includes("/v1/note/imagefeed") || url.includes("/v2/note/feed")) {
       }
     }
   }
-  if (obj?.data?.note_id !== "" && videoFeedUnlock?.length > 0) {
+if (obj?.data?.note_id !== "" && videoFeedUnlock?.length > 0) {
     if (obj?.data?.disable === true && obj?.data?.msg !== "") {
         obj.data.disable = false;
         obj.data.msg = "保存成功! ";
@@ -213,13 +213,14 @@ if (url.includes("/v1/note/imagefeed") || url.includes("/v2/note/feed")) {
                 obj.data.download_url = item.url;
             }
         }
-        
-        // 在通知内容中包含下载链接
+
+        // 在通知中包含下载链接，并设置点击通知时打开的 URL
         let notificationTitle = "⚠️⚠️⚠️";
         let notificationSubtitle = "不支持保存，请手动下载!";
         let notificationBody = "点此通知打开下载链接: " + obj.data.download_url;
-        
-        $notification.post(notificationTitle, notificationSubtitle, notificationBody);
+        let openUrl = obj.data.download_url; // 将下载链接设为通知点击后打开的 URL
+
+        $notification.post(notificationTitle, notificationSubtitle, notificationBody, { openUrl });
     }
 }
 
