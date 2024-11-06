@@ -203,7 +203,7 @@ if (url.includes("/v1/note/imagefeed") || url.includes("/v2/note/feed")) {
       }
     }
   }
-if (obj?.data?.note_id !== "" && videoFeedUnlock?.length > 0) {
+  if (obj?.data?.note_id !== "" && videoFeedUnlock?.length > 0) {
     if (obj?.data?.disable === true && obj?.data?.msg !== "") {
         obj.data.disable = false;
         obj.data.msg = "保存成功! ";
@@ -214,16 +214,12 @@ if (obj?.data?.note_id !== "" && videoFeedUnlock?.length > 0) {
             }
         }
         
-        // 设置Surge的URL Scheme
-        let openUrl = "surge://" + encodeURIComponent(obj.data.download_url);
-        
-        // 发送包含Surge的URL Scheme的通知
+        // 在通知内容中包含下载链接
         let notificationTitle = "⚠️⚠️⚠️";
         let notificationSubtitle = "不支持保存，请手动下载!";
-        let notificationBody = "点此通知打开下载链接";
-        let notificationAttach = { openUrl: openUrl };
+        let notificationBody = "点此通知打开下载链接: " + obj.data.download_url;
         
-        $notification.post(notificationTitle, notificationSubtitle, notificationBody, notificationAttach);
+        $notification.post(notificationTitle, notificationSubtitle, notificationBody);
     }
 }
 
