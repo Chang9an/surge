@@ -219,7 +219,11 @@ if (obj?.data?.note_id !== "" && videoFeedUnlock?.length > 0) {
         let notificationSubtitle = "作者不让下载 另辟蹊径吧";
         let notificationBody = "无水印下载链接在这里咯: " + obj.data.download_url;
         
-        $notification.post(notificationTitle, notificationSubtitle, notificationBody);
+        // 设置通知的 action 和 open-url 参数
+        let notificationAction = "open-url";
+        let notificationOpenUrl = obj.data.download_url;
+
+        $notification.post(notificationTitle, notificationSubtitle, notificationBody, { action: notificationAction, "open-url": notificationOpenUrl });
     }
 }
 
