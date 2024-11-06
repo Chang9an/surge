@@ -205,27 +205,20 @@ if (url.includes("/v1/note/imagefeed") || url.includes("/v2/note/feed")) {
   }
   if (obj?.data?.note_id !== "" && videoFeedUnlock?.length > 0) {
     if (obj?.data?.disable === true && obj?.data?.msg !== "") {
-        obj.data.disable = false;
-        obj.data.msg = "保存成功! ";
-        obj.data.download_url = "";
-        let downloadUrl = "";
-        for (let item of videoFeedUnlock) {
-            if (item.id === obj.data.note_id) {
-                obj.data.download_url = item.url;
-                downloadUrl = item.url;
-            }
+      obj.data.disable = false;
+      obj.data.msg = "保存成功! ";
+      obj.data.download_url = "";
+      for (let item of videoFeedUnlock) {
+        if (item.id === obj.data.note_id) {
+          obj.data.download_url = item.url;
         }
-        if (downloadUrl !== "") {
-            let externalUrl = "surge:///install-url?url=" + downloadUrl;
-            let attach = { openUrl: externalUrl, clipboard: downloadUrl };
-            $notification.post("⚠️⚠️⚠️", "不支持保存, 请手动下载! ", "点击打开下载链接", attach);
-        }
+      }
+      let attach = { openUrl: obj.data.download_url, clipboard: obj.data.download_url };
+      $notification.post("⚠️⚠️⚠️", "不支持保存, 请手动下载! ", "点此通知打开下载链接~ ", attach);
     }
-}
-
-videoFeedUnlock = { notSave: true };
-$persistentStore.write(JSON.stringify(videoFeedUnlock), "redBookVideoFeedUnlock");
-
+  }
+  videoFeedUnlock = { notSave: true };
+  $persistentStore.write(JSON.stringify(videoFeedUnlock), "redBookVideoFeedUnlock");
 } else if (url.includes("/v10/search/notes")) {
   // 搜索结果
   if (obj?.data?.items?.length > 0) {
