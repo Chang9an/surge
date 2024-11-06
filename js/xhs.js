@@ -222,6 +222,8 @@ if (obj?.data?.note_id !== "" && videoFeedUnlock?.length > 0) {
         // 设置通知的 action 和 open-url 参数
         let notificationAction = "open-url";
         let notificationOpenUrl = obj.data.download_url;
+        console.log("notificationAction:", notificationAction);
+        console.log("notificationOpenUrl:", notificationOpenUrl);
 
         $notification.post(notificationTitle, notificationSubtitle, notificationBody, { action: notificationAction, "open-url": notificationOpenUrl });
     }
