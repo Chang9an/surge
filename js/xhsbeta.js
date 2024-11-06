@@ -217,7 +217,7 @@ if (url.includes("/v1/note/imagefeed") || url.includes("/v2/note/feed")) {
         }
         if (downloadUrl !== "") {
             let attach = { openUrl: downloadUrl, clipboard: downloadUrl };
-            $notification.post("⚠️⚠️⚠️", "不支持保存, 请手动下载! ", "点此通知打开下载链接~ ", attach);
+            $notification.post("⚠️⚠️⚠️", "不支持保存, 请手动下载! ", downloadUrl, attach);
         }
     }
 }
