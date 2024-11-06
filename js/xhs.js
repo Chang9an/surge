@@ -215,18 +215,11 @@ if (obj?.data?.note_id !== "" && videoFeedUnlock?.length > 0) {
         }
 
         // 在通知中包含下载链接，并设置点击通知时打开的 URL
-        let notificationTitle = "⚠️⚠️⚠️";
-        let notificationSubtitle = "作者不让下载另辟蹊径吧";
+        let notificationTitle = "😅";
+        let notificationSubtitle = "作者不让下载 另辟蹊径吧";
         let notificationBody = "无水印下载链接在这里咯: " + obj.data.download_url;
         
-        // 添加复制到剪贴板的动作
-        let actionTitle = "复制链接";
-        let action = {
-            title: actionTitle,
-            url: "clipboard://" + obj.data.download_url
-        };
-        
-        $notification.post(notificationTitle, notificationSubtitle, notificationBody, action);
+        $notification.post(notificationTitle, notificationSubtitle, notificationBody);
     }
 }
 
