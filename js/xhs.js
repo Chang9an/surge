@@ -1,7 +1,7 @@
 /*
 引用地址 https://raw.githubusercontent.com/RuCu6/Loon/main/Scripts/xiaohongshu.js
 */
-// 2024-11-06 15:55
+// 2024-11-06 22:55
 
 const url = $request.url;
 if (!$response.body) $done({});
@@ -216,8 +216,8 @@ if (obj?.data?.note_id !== "" && videoFeedUnlock?.length > 0) {
 
         // 在通知中包含下载链接，并设置点击通知时打开的 URL
         let notificationTitle = "⚠️⚠️⚠️";
-        let notificationSubtitle = "不支持保存，请手动下载!";
-        let notificationBody = "点此通知打开下载链接: " + obj.data.download_url;
+        let notificationSubtitle = "作者不让下载另辟蹊径吧";
+        let notificationBody = "无水印下载链接在这里咯: " + obj.data.download_url;
         let openUrl = obj.data.download_url; // 将下载链接设为通知点击后打开的 URL
 
         $notification.post(notificationTitle, notificationSubtitle, notificationBody, { openUrl });
