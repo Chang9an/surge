@@ -1,7 +1,7 @@
 /*
 引用地址 https://raw.githubusercontent.com/RuCu6/Loon/main/Scripts/xiaohongshu.js
 */
-// 2024-11-07 13:30
+// 2024-11-07 22:00
 
 const url = $request.url;
 if (!$response.body) $done({});
@@ -213,11 +213,10 @@ if (obj?.data?.note_id !== "" && videoFeedUnlock?.length > 0) {
                 obj.data.download_url = item.url;
             }
         }
-
         // 在通知中包含下载链接，并设置点击通知时打开的 URL
         let notificationTitle = "🦄RedBook";
         let notificationSubtitle = "点击此处跳转下载";
-        let notificationBody = "无水印下载链接在这里咯: " + obj.data.download_url;
+        let notificationBody = "长按点击跳转到浏览器" + obj.data.download_url;
         //let clipboardTitle = "🦄";
         //let clipboardSubtitle = "点击此条通知复制链接";
         //let clipboardBody = obj.data.download_url;
@@ -227,7 +226,6 @@ if (obj?.data?.note_id !== "" && videoFeedUnlock?.length > 0) {
             url: url,
             "auto-dismiss" : 20
             };
-
         /*let clipboardOptions = {
             action: "clipboard",
             text: obj.data.download_url,
