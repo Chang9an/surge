@@ -1,7 +1,7 @@
 /*
 引用地址 https://raw.githubusercontent.com/RuCu6/Loon/main/Scripts/xiaohongshu.js
 */
-// 2024-11-08 12:45
+// 2024-11-09 14:30
 
 const url = $request.url;
 if (!$response.body) $done({});
@@ -132,6 +132,25 @@ if (url.includes("/v1/note/imagefeed") || url.includes("/v2/note/feed")) {
     obj.data.items = obj.data.items.filter((i) => !["recommend_user"]?.includes(i?.recommend_reason));
   }
 } else if (url.includes("/v4/note/videofeed")) {
+  if (obj?.data?.length > 0) {
+    for (let item of obj.data) {
+      if (item?.media_save_config) {
+        // 水印开关
+        item.media_save_config.disable_save = false;
+        item.media_save_config.disable_watermark = true;
+        item.media_save_config.disable_weibo_cover = true;
+      }
+      if (item?.share_info?.function_entries?.length > 0) {
+        // 下载限制
+        const additem = { type: "video_download" };
+        let func = item.share_info.function_entries[0];
+        if (func?.type !== "video_download") {
+          // 向数组开头添加对象
+          item.share_info.function_entries.unshift(additem);
+        }
+      }
+    }
+  }
   // 信息流 视频
   let newDatas = [];
   let unlockDatas = [];
