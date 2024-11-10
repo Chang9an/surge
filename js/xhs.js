@@ -1,7 +1,7 @@
 /*
 引用地址 https://raw.githubusercontent.com/RuCu6/Loon/main/Scripts/xiaohongshu.js
 */
-// 2024-11-09 14:30
+// 2024-11-10 14:30
 
 const url = $request.url;
 if (!$response.body) $done({});
@@ -142,12 +142,21 @@ if (url.includes("/v1/note/imagefeed") || url.includes("/v2/note/feed")) {
       }
       if (item?.share_info?.function_entries?.length > 0) {
         // 下载限制
-        const additem = { type: "video_download" };
-        let func = item.share_info.function_entries[0];
-        if (func?.type !== "video_download") {
-          // 向数组开头添加对象
-          item.share_info.function_entries.unshift(additem);
+        // 检查数组是否包含 type: "video_download"
+        const hasDownload = item?.share_info?.function_entries.some((entry) => entry.type === "video_download");
+        // 如果有下载按钮，则将其置顶
+      if (hasDownload) {
+        const index = item.share_info.function_entries.findIndex(
+          (entry) => entry.type === "video_download"
+        );
+        if (index > 0) {
+          const downloadEntry = item.share_info.function_entries.splice(index, 1)[0];
+          item.share_info.function_entries.splice(0, 0, downloadEntry);
         }
+      } else {
+        // 如果没有下载按钮，则添加一个并置顶
+        item.share_info.function_entries.splice(0, 0, { type: "video_download" });
+      }
       }
     }
   }
