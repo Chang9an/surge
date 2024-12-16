@@ -1,7 +1,7 @@
 /*
 引用地址 https://raw.githubusercontent.com/RuCu6/Loon/main/Scripts/xiaohongshu.js
 */
-// 2024-11-10 14:30
+// 2024-12-16 10:30
 
 const url = $request.url;
 if (!$response.body) $done({});
@@ -134,6 +134,10 @@ if (url.includes("/v1/note/imagefeed") || url.includes("/v2/note/feed")) {
 } else if (url.includes("/v4/note/videofeed")) {
   if (obj?.data?.length > 0) {
     for (let item of obj.data) {
+      if (item?.goods_seller_service) {
+        // 商品链接
+        delete item;
+      }
       if (item?.media_save_config) {
         // 水印开关
         item.media_save_config.disable_save = false;
