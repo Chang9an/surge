@@ -1,7 +1,7 @@
 /*
 引用地址 https://raw.githubusercontent.com/RuCu6/Loon/main/Scripts/xiaohongshu.js
 */
-// 2024-12-16 11:40
+// 2025-01-09 13:40
 
 const url = $request.url;
 if (!$response.body) $done({});
@@ -81,14 +81,16 @@ if (url.includes("/v1/note/imagefeed") || url.includes("/v2/note/feed")) {
     }
   }
 } else if (url.includes("/v2/note/widgets")) {
+
   // 详情页小部件
-  const item = ["cooperate_binds", "generic", "note_next_step"];
+  const item = ["cooperate_binds", "generic", "widgets_ndb", "widgets_ncb", "note_next_step", "widgets_ndb", "widgets_ncb"];
   // cooperate_binds合作品牌 note_next_step活动
   if (obj?.data) {
     for (let i of item) {
       delete obj.data[i];
     }
   }
+
 } else if (url.includes("/v2/system_service/splash_config")) {
   // 开屏广告
   if (obj?.data?.ads_groups?.length > 0) {
