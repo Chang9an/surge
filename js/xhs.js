@@ -1,7 +1,7 @@
 /*
 引用地址 https://raw.githubusercontent.com/RuCu6/Loon/main/Scripts/xiaohongshu.js
 */
-// 2025-01-09 13:40
+// 2025-01-29 13:40
 
 const url = $request.url;
 if (!$response.body) $done({});
@@ -149,6 +149,10 @@ if (url.includes("/v1/note/imagefeed") || url.includes("/v2/note/feed")) {
   let unlockDatas = [];
   if (obj?.data?.length > 0) {
     for (let item of obj.data) {
+      // 检查是否是广告
+      if (item.hasOwnProperty("ad")) {
+        continue; // 跳过广告项
+      }
       if (item?.id !== "" && item?.video_info_v2?.media?.stream?.h265?.[0]?.master_url !== "") {
         let myData = {
           id: item.id,
