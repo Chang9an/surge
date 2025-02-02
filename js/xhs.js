@@ -1,12 +1,44 @@
 /*
-引用地址 https://raw.githubusercontent.com/RuCu6/Loon/main/Scripts/xiaohongshu.js
+引用地址RuCu6
 */
-// 2025-01-29 13:40
+// 2025-02-02 19:40
 
 const url = $request.url;
 if (!$response.body) $done({});
 let obj = JSON.parse($response.body);
 
+// 优化后的流选择函数
+function selectBestStream(streams) {
+  if (!streams?.length) return null;
+
+  let maxScore = 0;
+  let bestStream = streams[0];
+  
+  // 优先处理HDR流
+  const hdrStreams = streams.filter(s => s?.hdr_type === 1);
+  const candidateStreams = hdrStreams.length ? hdrStreams : streams;
+
+  for (const stream of candidateStreams) {
+      // 动态计算分辨率（考虑旋转情况）
+      const isPortrait = stream.height > stream.width;
+      const displayWidth = isPortrait ? stream.height : stream.width;
+      const displayHeight = isPortrait ? stream.width : stream.height;
+      
+      // 评分规则：分辨率 + 码率权重
+      const resolutionScore = displayWidth * displayHeight;
+      const bitrateWeight = stream.video_bitrate * 0.0001;
+      const totalScore = resolutionScore + bitrateWeight;
+
+      // 特殊处理HDR流
+      const hdrBonus = stream.hdr_type === 1 ? 1000000 : 0;
+
+      if ((totalScore + hdrBonus) > maxScore) {
+          maxScore = totalScore + hdrBonus;
+          bestStream = stream;
+      }
+  }
+  return bestStream;
+}
 if (url.includes("/v1/note/imagefeed") || url.includes("/v2/note/feed")) {
   // 信息流 图片
   let newDatas = [];
@@ -144,54 +176,41 @@ if (url.includes("/v1/note/imagefeed") || url.includes("/v2/note/feed")) {
     obj.data.items = obj.data.items.filter((i) => !["recommend_user"]?.includes(i?.recommend_reason));
   }
 } else if (url.includes("/v4/note/videofeed")) {
-  // 信息流 视频
   let newDatas = [];
-  let unlockDatas = [];
-  if (obj?.data?.length > 0) {
-    for (let item of obj.data) {
-      // 检查是否是广告
-      if (item.hasOwnProperty("ad")) {
-        continue; // 跳过广告项
-      }
-      if (item?.id !== "" && item?.video_info_v2?.media?.stream?.h265?.[0]?.master_url !== "") {
-        let myData = {
-          id: item.id,
-          url: item.video_info_v2.media.stream.h265[0].master_url
-        };
-        newDatas.push(myData);
-      }
-      if (item?.share_info?.function_entries?.length > 0) {
-        // 视频下载限制
-        const additem = { type: "video_download" };
-        // 检查是否存在 video_download 并获取其索引
-        let videoDownloadIndex = item.share_info.function_entries.findIndex((i) => i?.type === "video_download");
-        if (videoDownloadIndex !== -1) {
-          // 如果存在，将其移动到数组的第一个位置
-          let videoDownloadEntry = item.share_info.function_entries.splice(videoDownloadIndex, 1)[0];
-          item.share_info.function_entries.splice(0, 0, videoDownloadEntry);
-        } else {
-          // 如果不存在，在数组开头添加一个新的 video_download 对象
-          item.share_info.function_entries.splice(0, 0, additem);
-        }
-      }
+    if (obj?.data?.length) {
+        obj.data.forEach(item => {
+            if (item.ad) return;
+
+            const streams = item?.video_info_v2?.media?.stream?.h265;
+            const bestStream = selectBestStream(streams);
+            
+            if (bestStream?.master_url) {
+                newDatas.push({
+                    id: item.id,
+                    url: bestStream.master_url,
+                    hdr: bestStream.hdr_type === 1,
+                    width: bestStream.width,
+                    height: bestStream.height
+                });
+            }
+            if (item?.share_info?.function_entries?.length > 0) {
+              // 视频下载限制
+              const additem = { type: "video_download" };
+              // 检查是否存在 video_download 并获取其索引
+              let videoDownloadIndex = item.share_info.function_entries.findIndex((i) => i?.type === "video_download");
+              if (videoDownloadIndex !== -1) {
+                // 如果存在，将其移动到数组的第一个位置
+                let videoDownloadEntry = item.share_info.function_entries.splice(videoDownloadIndex, 1)[0];
+                item.share_info.function_entries.splice(0, 0, videoDownloadEntry);
+              } else {
+                // 如果不存在，在数组开头添加一个新的 video_download 对象
+                item.share_info.function_entries.splice(0, 0, additem);
+              }
+            }
+        });
+        $persistentStore.write(JSON.stringify(newDatas), "redBookVideoFeed");
     }
-    $persistentStore.write(JSON.stringify(newDatas), "redBookVideoFeed"); // 普通视频 写入持久化存储
-  }
-  let videoFeedUnlock = JSON.parse($persistentStore.read("redBookVideoFeedUnlock")); // 禁止保存的视频 读取持久化存储
-  if (videoFeedUnlock?.gayhub === "rucu6") {
-    if (obj?.data?.length > 0) {
-      for (let item of obj.data) {
-        if (item?.id !== "" && item?.video_info_v2?.media?.stream?.h265?.[0]?.master_url !== "") {
-          let myData = {
-            id: item.id,
-            url: item.video_info_v2.media.stream.h265[0].master_url
-          };
-          unlockDatas.push(myData);
-        }
-      }
-    }
-    $persistentStore.write(JSON.stringify(unlockDatas), "redBookVideoFeedUnlock"); // 禁止保存的视频 写入持久化存储
-  }
+
 } else if (url.includes("/v5/recommend/user/follow_recommend")) {
   // 用户详情页 你可能感兴趣的人
   if (obj?.data?.title === "你可能感兴趣的人" && obj?.data?.rec_users?.length > 0) {
@@ -228,30 +247,17 @@ if (url.includes("/v1/note/imagefeed") || url.includes("/v2/note/feed")) {
   }
 } else if (url.includes("/v10/note/video/save")) {
   // 视频保存请求
-  let videoFeed = JSON.parse($persistentStore.read("redBookVideoFeed")); // 普通视频 读取持久化存储
-  let videoFeedUnlock = JSON.parse($persistentStore.read("redBookVideoFeedUnlock")); // 禁止保存的视频 读取持久化存储
-  if (obj?.data?.note_id !== "" && videoFeed?.length > 0) {
-    for (let item of videoFeed) {
-      if (item.id === obj.data.note_id) {
-        obj.data.download_url = item.url;
-      }
-    }
-  }
-  if (obj?.data?.note_id !== "" && videoFeedUnlock?.length > 0) {
-    if (obj?.data?.disable === true && obj?.data?.msg !== "") {
+  const videoFeed = JSON.parse($persistentStore.read("redBookVideoFeed") || "[]");
+  const targetVideo = videoFeed.find(v => v.id === obj.data?.note_id);
+  
+  if (targetVideo) {
+      // 优先使用原始HDR链接
+      obj.data.download_url = targetVideo.url;
+      // 强制解锁下载限制
       delete obj.data.disable;
       delete obj.data.msg;
-      obj.data.download_url = "";
       obj.data.status = 2;
-      for (let item of videoFeedUnlock) {
-        if (item.id === obj.data.note_id) {
-          obj.data.download_url = item.url;
-        }
-      }
-    }
   }
-  videoFeedUnlock = { gayhub: "rucu6" };
-  $persistentStore.write(JSON.stringify(videoFeedUnlock), "redBookVideoFeedUnlock");
 } else if (url.includes("/v10/search/notes")) {
   // 搜索结果
   if (obj?.data?.items?.length > 0) {
