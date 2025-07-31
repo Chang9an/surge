@@ -1,7 +1,7 @@
 /*
 引用地址RuCu6
 */
-// 2025-06-23 
+// 2025-08-01
 
 const url = $request.url;
 if (!$response.body) $done({});
@@ -133,7 +133,7 @@ else if (url.includes("/v1/note/imagefeed") || url.includes("/v2/note/feed")) {
       obj.data.datas.forEach((itemA) => {
         livePhoto.forEach((itemB) => {
           if (itemB?.file_id === itemA?.file_id && itemA?.url !== "") {
-            itemA.url = itemA.url.replace(/^https?:\/\/.*\.mp4$/g, itemB.url);
+            itemA.url = itemA.url.replace(/^https?:\/\/.*\.mp4(\?[^"]*)?/g, itemB.url);
           }
         });
       });
