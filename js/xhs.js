@@ -1,7 +1,7 @@
 /*
 引用地址RuCu6
 */
-// 2025-08-01
+// 2025-12-13
 
 const url = $request.url;
 if (!$response.body) $done({});
@@ -231,6 +231,17 @@ else if (url.includes("/v1/note/imagefeed") || url.includes("/v2/note/feed")) {
                     width: bestStream.width,
                     height: bestStream.height
                 });
+            }
+            // 高效处理 function_switch
+            const funcSwitch = item.function_switch;
+            if (Array.isArray(funcSwitch)) {
+                for (let i = 0; i < funcSwitch.length; i++) {
+                    if (funcSwitch[i].type === "video_download") {
+                        funcSwitch[i].enable = true;
+                        delete funcSwitch[i].reason; // 移除禁用理由
+                        break; // 找到目标后立即退出循环
+                    }
+                }
             }
             if (item?.share_info?.function_entries?.length > 0) {
                 // 视频下载限制
