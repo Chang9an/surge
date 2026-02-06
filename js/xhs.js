@@ -1,7 +1,7 @@
 /*
 引用地址RuCu6
 */
-// 2025-12-13
+// 2026-02-06
 
 const url = $request.url;
 if (!$response.body) $done({});
@@ -216,6 +216,13 @@ else if (url.includes("/v1/note/imagefeed") || url.includes("/v2/note/feed")) {
 } else if (url.includes("/v4/note/videofeed")) {
     let newDatas = [];
     if (obj?.data?.length) {
+        // 过滤掉商品推广内容
+        obj.data = obj.data.filter(item => {
+            // 检查是否为商品推广内容
+            const hasGoodsAttribute = item?.note_attributes?.includes("goods") || 
+                                     (item?.has_related_goods === true);
+            return !hasGoodsAttribute;
+        });
         for (const item of obj.data) {
             // 检查是否包含广告属性，如果是则跳过当前项
             if (item.hasOwnProperty("ad")) continue;
