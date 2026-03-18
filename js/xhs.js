@@ -1,7 +1,7 @@
 /*
 引用地址RuCu6
 */
-// 2026-02-06
+// 2026-03-18
 
 const url = $request.url;
 if (!$response.body) $done({});
@@ -102,6 +102,16 @@ else if (url.includes("/v1/note/imagefeed") || url.includes("/v2/note/feed")) {
           item.share_info.function_entries.splice(0, 0, additem);
         }
       }
+      const funcSwitch = item.function_switch;
+            if (Array.isArray(funcSwitch)) {
+                for (let i = 0; i < funcSwitch.length; i++) {
+                    if (funcSwitch[i].type === "image_download") {
+                        funcSwitch[i].enable = true;
+                        delete funcSwitch[i].reason; // 移除禁用理由
+                        break; // 找到目标后立即退出循环
+                    }
+                }
+            }
       if (item?.images_list?.length > 0) {
         for (let i of item.images_list) {
           if (i.hasOwnProperty("live_photo_file_id") && i.hasOwnProperty("live_photo")) {
