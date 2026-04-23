@@ -1,7 +1,7 @@
 # NIKKE 分流
 DOMAIN-SUFFIX, ios-us-crashsight.iegcom.com
 DOMAIN-SUFFIX, aws-na-dr.intlgame.com
-DOMAIN-SUFFIX, ocloud.nikke-kr.com
+
 DOMAIN-SUFFIX, jp-lobby.nikke-kr.com
 DOMAIN-SUFFIX, nikke-en.com
 
@@ -13,7 +13,7 @@ DOMAIN-SUFFIX, aws-na-dr.intlgame.com
 DOMAIN-SUFFIX, data-aws-na.intlgame.com
 
 DOMAIN-SUFFIX, pc.crashsight-us.iegcom.com
-IP-CIDR, 43.152.114.31/32
+IP-CIDR, 43.152.114.31/32, no-resolve
 
 DOMAIN-SUFFIX, nikke-kr.com
 DOMAIN-SUFFIX, intlgame.com
