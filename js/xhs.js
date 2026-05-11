@@ -1,7 +1,4 @@
-/*
-引用地址RuCu6
-*/
-// 2026-03-18
+// 2026-05-11-2245
 
 const url = $request.url;
 if (!$response.body) $done({});
@@ -39,6 +36,7 @@ function selectBestStream(streams) {
   }
   return bestStream;
 }
+
 // 评论ID转换函数
 function replaceRedIdWithFmz200(obj) {
   if (Array.isArray(obj)) {
@@ -53,25 +51,62 @@ function replaceRedIdWithFmz200(obj) {
     });
   }
 }
-// 实况照片去重函数
+
+// 实况照片去重函数 目前不需要
 function deduplicateLivePhotos(livePhotos) {
   const seen = new Map();
-  livePhotos = livePhotos.filter((item) => {
-    if (seen.has(item.videId)) {
+  return livePhotos.filter((item) => {
+    if (seen.has(item.noteLivePhotoId)) {
       return false;
     }
-    seen.set(item.videId, true);
+    seen.set(item.noteLivePhotoId, true);
     return true;
   });
-  return livePhotos;
 }
+
+// 评论视频去重函数
+function deduplicateCommentVideos(videos) {
+  const seen = new Map();
+  return videos.filter((item) => {
+    if (seen.has(item.commentVideoId)) {
+      return false;
+    }
+    seen.set(item.commentVideoId, true);
+    return true;
+  });
+}
+
+// 评论实况照片去重函数
+function deduplicateCommentLivePhotos(livePhotos) {
+  const seen = new Map();
+  return livePhotos.filter((item) => {
+    if (seen.has(item.commentLivePhotoId)) {
+      return false;
+    }
+    seen.set(item.commentLivePhotoId, true);
+    return true;
+  });
+}
+
 if (url.includes("/v1/interaction/comment/video/download")) {
   // [移植]评论区实况照片保存
-  let commitsCache = JSON.parse($persistentStore.read("redBookCommentLivePhoto"));
+  let commitsCache = JSON.parse($persistentStore.read("redBookCommentLivePhoto") || "{}");
   if (commitsCache && commitsCache?.livePhotos?.length > 0 && obj?.data?.video) {
     for (const item of commitsCache.livePhotos) {
-      if (item?.videId === obj?.data?.video?.video_id) {
-        obj.data.video.video_url = item.videoUrl;
+      if (item?.commentLivePhotoId === obj?.data?.video?.video_id) {
+        obj.data.video.video_url = item.commentLivePhotoUrl;
+        break;
+      }
+    }
+  }
+  
+  // [新增]评论区视频去水印
+  let commentVideosCache = JSON.parse($persistentStore.read("redBookCommentVideos") || "{}");
+  if (commentVideosCache && commentVideosCache?.videos?.length > 0 && obj?.data?.video) {
+    const videoId = obj?.data?.video?.video_id;
+    for (const item of commentVideosCache.videos) {
+      if (item?.commentVideoId === videoId) {
+        obj.data.video.video_url = item.commentVideoUrl;
         break;
       }
     }
@@ -103,15 +138,15 @@ else if (url.includes("/v1/note/imagefeed") || url.includes("/v2/note/feed")) {
         }
       }
       const funcSwitch = item.function_switch;
-            if (Array.isArray(funcSwitch)) {
-                for (let i = 0; i < funcSwitch.length; i++) {
-                    if (funcSwitch[i].type === "image_download") {
-                        funcSwitch[i].enable = true;
-                        delete funcSwitch[i].reason; // 移除禁用理由
-                        break; // 找到目标后立即退出循环
-                    }
-                }
-            }
+      if (Array.isArray(funcSwitch)) {
+        for (let i = 0; i < funcSwitch.length; i++) {
+          if (funcSwitch[i].type === "image_download") {
+            funcSwitch[i].enable = true;
+            delete funcSwitch[i].reason; // 移除禁用理由
+            break; // 找到目标后立即退出循环
+          }
+        }
+      }
       if (item?.images_list?.length > 0) {
         for (let i of item.images_list) {
           if (i.hasOwnProperty("live_photo_file_id") && i.hasOwnProperty("live_photo")) {
@@ -121,9 +156,9 @@ else if (url.includes("/v1/note/imagefeed") || url.includes("/v2/note/feed")) {
               i?.live_photo?.media?.stream?.h265?.[0]?.master_url !== ""
             ) {
               let myData = {
-                file_id: i.live_photo_file_id,
-                video_id: i.live_photo.media.video_id,
-                url: i.live_photo.media.stream.h265[0].master_url
+                noteLivePhotoFileId: i.live_photo_file_id,
+                noteLivePhotoId: i.live_photo.media.video_id,
+                noteLivePhotoUrl: i.live_photo.media.stream.h265[0].master_url
               };
               newDatas.push(myData);
             }
@@ -142,8 +177,8 @@ else if (url.includes("/v1/note/imagefeed") || url.includes("/v2/note/feed")) {
     if (livePhoto?.length > 0) {
       obj.data.datas.forEach((itemA) => {
         livePhoto.forEach((itemB) => {
-          if (itemB?.file_id === itemA?.file_id && itemA?.url !== "") {
-            itemA.url = itemA.url.replace(/^https?:\/\/.*\.mp4(\?[^"]*)?/g, itemB.url);
+          if (itemB?.noteLivePhotoFileId === itemA?.file_id && itemA?.url !== "") {
+            itemA.url = itemA.url.replace(/^https?:\/\/.*\.mp4(\?[^"]*)?/g, itemB.noteLivePhotoUrl);
           }
         });
       });
@@ -224,68 +259,70 @@ else if (url.includes("/v1/note/imagefeed") || url.includes("/v2/note/feed")) {
     obj.data.items = obj.data.items.filter((i) => !["recommend_user"]?.includes(i?.recommend_reason));
   }
 } else if (url.includes("/v4/note/videofeed")) {
-    let newDatas = [];
-    if (obj?.data?.length) {
-        // 过滤掉商品推广内容
-        obj.data = obj.data.filter(item => {
-            // 检查是否为商品推广内容
-            const hasGoodsAttribute = item?.note_attributes?.includes("goods") || 
-                                     (item?.has_related_goods === true);
-            return !hasGoodsAttribute;
-        });
-        for (const item of obj.data) {
-            // 检查是否包含广告属性，如果是则跳过当前项
-            if (item.hasOwnProperty("ad")) continue;
+  let newDatas = [];
+  if (obj?.data?.length) {
+    // 过滤掉商品推广内容
+    obj.data = obj.data.filter(item => {
+      // 检查是否为商品推广内容
+      const hasGoodsAttribute = item?.note_attributes?.includes("goods") || 
+                               (item?.has_related_goods === true);
+      return !hasGoodsAttribute;
+    });
+    for (const item of obj.data) {
+      // 检查是否包含广告属性，如果是则跳过当前项
+      if (item.hasOwnProperty("ad")) continue;
 
-            const streams = item?.video_info_v2?.media?.stream?.h265;
-            const bestStream = selectBestStream(streams);
-            
-            if (bestStream?.master_url) {
-                newDatas.push({
-                    id: item.id,
-                    url: bestStream.master_url,
-                    hdr: bestStream.hdr_type === 1,
-                    width: bestStream.width,
-                    height: bestStream.height
-                });
-            }
-            // 高效处理 function_switch
-            const funcSwitch = item.function_switch;
-            if (Array.isArray(funcSwitch)) {
-                for (let i = 0; i < funcSwitch.length; i++) {
-                    if (funcSwitch[i].type === "video_download") {
-                        funcSwitch[i].enable = true;
-                        delete funcSwitch[i].reason; // 移除禁用理由
-                        break; // 找到目标后立即退出循环
-                    }
-                }
-            }
-            if (item?.share_info?.function_entries?.length > 0) {
-                // 视频下载限制
-                const additem = { type: "video_download" };
-                // 检查是否存在 video_download 并获取其索引
-                let videoDownloadIndex = item.share_info.function_entries.findIndex((i) => i?.type === "video_download");
-                if (videoDownloadIndex !== -1) {
-                    // 如果存在，将其移动到数组的第一个位置
-                    let videoDownloadEntry = item.share_info.function_entries.splice(videoDownloadIndex, 1)[0];
-                    item.share_info.function_entries.splice(0, 0, videoDownloadEntry);
-                } else {
-                    // 如果不存在，在数组开头添加一个新的 video_download 对象
-                    item.share_info.function_entries.splice(0, 0, additem);
-                }
-            }
+      const streams = item?.video_info_v2?.media?.stream?.h265;
+      const bestStream = selectBestStream(streams);
+      
+      if (bestStream?.master_url) {
+        newDatas.push({
+          id: item.id,
+          url: bestStream.master_url,
+          hdr: bestStream.hdr_type === 1,
+          width: bestStream.width,
+          height: bestStream.height
+        });
+      }
+      // 高效处理 function_switch
+      const funcSwitch = item.function_switch;
+      if (Array.isArray(funcSwitch)) {
+        for (let i = 0; i < funcSwitch.length; i++) {
+          if (funcSwitch[i].type === "video_download") {
+            funcSwitch[i].enable = true;
+            delete funcSwitch[i].reason; // 移除禁用理由
+            break; // 找到目标后立即退出循环
+          }
         }
-        $persistentStore.write(JSON.stringify(newDatas), "redBookVideoFeed");
+      }
+      if (item?.share_info?.function_entries?.length > 0) {
+        // 视频下载限制
+        const additem = { type: "video_download" };
+        // 检查是否存在 video_download 并获取其索引
+        let videoDownloadIndex = item.share_info.function_entries.findIndex((i) => i?.type === "video_download");
+        if (videoDownloadIndex !== -1) {
+          // 如果存在，将其移动到数组的第一个位置
+          let videoDownloadEntry = item.share_info.function_entries.splice(videoDownloadIndex, 1)[0];
+          item.share_info.function_entries.splice(0, 0, videoDownloadEntry);
+        } else {
+          // 如果不存在，在数组开头添加一个新的 video_download 对象
+          item.share_info.function_entries.splice(0, 0, additem);
+        }
+      }
     }
+    $persistentStore.write(JSON.stringify(newDatas), "redBookVideoFeed");
+  }
 } 
 else if (url.includes("/v5/note/comment/list")) {
   // [移植]评论列表处理
   replaceRedIdWithFmz200(obj.data); // 评论ID格式转换
-  let livePhotos = [];
+  let commentLivePhotos = [];
+  let commentVideos = [];
   let note_id = "";
 
   if (obj?.data?.comments?.length > 0) {
     note_id = obj.data.comments[0].note_id;
+    
     for (const comment of obj.data.comments) {
       // 评论类型转换 (表情包→图片)
       if (comment?.comment_type === 3) comment.comment_type = 2;
@@ -297,10 +334,42 @@ else if (url.includes("/v5/note/comment/list")) {
           if (picture?.video_id) {
             const picObj = JSON.parse(picture.video_info);
             if (picObj?.stream?.h265?.[0]?.master_url) {
-              livePhotos.push({
-                videId: picture.video_id,
-                videoUrl: picObj.stream.h265[0].master_url
+              commentLivePhotos.push({
+                commentLivePhotoId: picture.video_id,
+                commentLivePhotoUrl: picObj.stream.h265[0].master_url
               });
+            }
+          }
+        }
+      }
+      
+      // [新增]评论视频处理 - 提取无水印视频链接
+      if (comment?.videos?.length > 0) {
+        for (const video of comment.videos) {
+          if (video?.video_id && video?.video_info) {
+            try {
+              const videoObj = JSON.parse(video.video_info);
+              const streams = videoObj?.stream?.h265;
+              
+              if (streams?.length > 0) {
+                // 使用流选择函数选择最佳流（最高质量）
+                const bestStream = selectBestStream(streams);
+                
+                if (bestStream?.master_url) {
+                  commentVideos.push({
+                    commentVideoId: video.video_id,
+                    commentVideoUrl: bestStream.master_url,
+                    commentId: comment.id,
+                    noteId: note_id,
+                    width: bestStream.width,
+                    height: bestStream.height,
+                    bitrate: bestStream.video_bitrate,
+                    hdr: bestStream.hdr_type === 1
+                  });
+                }
+              }
+            } catch (e) {
+              // 忽略解析错误
             }
           }
         }
@@ -317,10 +386,39 @@ else if (url.includes("/v5/note/comment/list")) {
               if (picture?.video_id) {
                 const picObj = JSON.parse(picture.video_info);
                 if (picObj?.stream?.h265?.[0]?.master_url) {
-                  livePhotos.push({
-                    videId: picture.video_id,
-                    videoUrl: picObj.stream.h265[0].master_url
+                  commentLivePhotos.push({
+                    commentLivePhotoId: picture.video_id,
+                    commentLivePhotoUrl: picObj.stream.h265[0].master_url
                   });
+                }
+              }
+            }
+          }
+          
+          // [新增]子评论视频处理
+          if (sub_comment?.videos?.length > 0) {
+            for (const video of sub_comment.videos) {
+              if (video?.video_id && video?.video_info) {
+                try {
+                  const videoObj = JSON.parse(video.video_info);
+                  const streams = videoObj?.stream?.h265;
+                  if (streams?.length > 0) {
+                    const bestStream = selectBestStream(streams);
+                    if (bestStream?.master_url) {
+                      commentVideos.push({
+                        commentVideoId: video.video_id,
+                        commentVideoUrl: bestStream.master_url,
+                        commentId: sub_comment.id,
+                        noteId: note_id,
+                        width: bestStream.width,
+                        height: bestStream.height,
+                        bitrate: bestStream.video_bitrate,
+                        hdr: bestStream.hdr_type === 1
+                      });
+                    }
+                  }
+                } catch (e) {
+                  // 忽略解析错误
                 }
               }
             }
@@ -331,12 +429,21 @@ else if (url.includes("/v5/note/comment/list")) {
   }
 
   // 存储评论实况照片
-  if (livePhotos.length > 0) {
-    let commitsCache = JSON.parse($persistentStore.read("redBookCommentLivePhoto") || "null");
+  if (commentLivePhotos.length > 0) {
+    let commitsCache = JSON.parse($persistentStore.read("redBookCommentLivePhoto") || "{}");
     commitsCache = commitsCache?.noteId === note_id 
-      ? { noteId: note_id, livePhotos: deduplicateLivePhotos([...commitsCache.livePhotos, ...livePhotos]) }
-      : { noteId: note_id, livePhotos: deduplicateLivePhotos(livePhotos) };
+      ? { noteId: note_id, livePhotos: deduplicateCommentLivePhotos([...commitsCache.livePhotos, ...commentLivePhotos]) }
+      : { noteId: note_id, livePhotos: deduplicateCommentLivePhotos(commentLivePhotos) };
     $persistentStore.write(JSON.stringify(commitsCache), "redBookCommentLivePhoto");
+  }
+  
+  // [新增]存储评论视频信息
+  if (commentVideos.length > 0) {
+    commentVideos = deduplicateCommentVideos(commentVideos);
+    
+    let videosCache = JSON.parse($persistentStore.read("redBookCommentVideos") || "{}");
+    videosCache = { noteId: note_id, videos: commentVideos };
+    $persistentStore.write(JSON.stringify(videosCache), "redBookCommentVideos");
   }
 }
 else if (url.includes("/v5/recommend/user/follow_recommend")) {
@@ -352,24 +459,27 @@ else if (url.includes("/v5/recommend/user/follow_recommend")) {
       if (item?.model_type === "live_v2") {
         // 信息流-直播
         continue;
-      } else if (item.hasOwnProperty("ads_info")) {
+      }
+      if (item.hasOwnProperty("ads_info")) {
         // 信息流-赞助
         continue;
-      } else if (item.hasOwnProperty("card_icon")) {
+      }
+      if (item.hasOwnProperty("card_icon")) {
         // 信息流-带货
         continue;
-      } else if (item.hasOwnProperty("note_attributes")) {
+      }
+      if (item.hasOwnProperty("note_attributes")) {
         // 信息流-带货
         continue;
-      } else if (item?.note_attributes?.includes("goods")) {
+      }
+      if (item?.note_attributes?.includes("goods")) {
         // 信息流-商品
         continue;
-      } else {
-        if (item?.related_ques) {
-          delete item.related_ques;
-        }
-        newItems.push(item);
       }
+      if (item?.related_ques) {
+        delete item.related_ques;
+      }
+      newItems.push(item);
     }
     obj.data = newItems;
   }
@@ -379,12 +489,12 @@ else if (url.includes("/v5/recommend/user/follow_recommend")) {
   const targetVideo = videoFeed.find(v => v.id === obj.data?.note_id);
   
   if (targetVideo) {
-      // 优先使用原始HDR链接
-      obj.data.download_url = targetVideo.url;
-      // 强制解锁下载限制
-      delete obj.data.disable;
-      delete obj.data.msg;
-      obj.data.status = 2;
+    // 优先使用原始HDR链接
+    obj.data.download_url = targetVideo.url;
+    // 强制解锁下载限制
+    delete obj.data.disable;
+    delete obj.data.msg;
+    obj.data.status = 2;
   }
 } else if (url.includes("/v10/search/notes")) {
   // 搜索结果
